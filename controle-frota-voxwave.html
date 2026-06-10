@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Frota — Hidráulicos Fenili</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #0a1628;
+    --surface: #0f1f3d;
+    --surface2: #162847;
+    --border: #1e3560;
+    --accent: #cc1f1f;
+    --accent-dim: rgba(204,31,31,0.12);
+    --accent-hover: #e02222;
+    --blue-light: #1a4a8a;
+    --blue-mid: #1e3a6e;
+    --yellow: #f5c842;
+    --green: #00c896;
+    --green-dim: rgba(0,200,150,0.12);
+    --text: #f0f0f0;
+    --text-muted: #5a7aaa;
+    --text-mid: #8aabcc;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    border-bottom: 2px solid var(--accent);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: 58px;
+  }
+
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nav-logo-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: var(--accent);
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+
+  .nav-logo-box svg {
+    width: 20px;
+    height: 20px;
+    fill: white;
+  }
+
+  .nav-brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .nav-brand-name {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    color: #fff;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+  }
+
+  .nav-brand-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .nav-tabs { display: flex; gap: 3px; }
+
+  .tab-btn {
+    background: none;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 13px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover { color: var(--text-mid); background: var(--surface2); }
+  .tab-btn.active { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+  /* ── MAIN ── */
+  main {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── STATS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+
+  .stat-label { font-size: 10px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; color: var(--yellow); }
+  .stat-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    padding-left: 2px;
+    border-left: 2px solid var(--accent);
+    padding-left: 8px;
+  }
+
+  /* ── FORA CARD ── */
+  .fora-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--yellow);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+
+  .fora-veiculo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: var(--text-mid);
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: center;
+  }
+
+  .fora-info { flex: 1; }
+  .fora-motorista { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .fora-destino { font-size: 12px; color: var(--text-muted); }
+  .fora-meta { text-align: right; font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+  .fora-tempo { font-weight: 600; color: var(--yellow); font-size: 12px; margin-bottom: 2px; }
+
+  /* ── REGISTROS ── */
+  .registro-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .registro-card.aberto { border-left: 3px solid var(--yellow); }
+  .registro-card.fechado { border-left: 3px solid var(--green); opacity: 0.65; }
+
+  .reg-veiculo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: var(--text-mid);
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: center;
+  }
+
+  .reg-info { flex: 1; }
+  .reg-motorista { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .reg-destino { font-size: 12px; color: var(--text-muted); }
+  .reg-meta { text-align: right; font-size: 11px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+  .reg-km { font-weight: 600; color: var(--text-mid); font-size: 12px; }
+
+  .badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-aberto { background: rgba(245,200,66,0.15); color: var(--yellow); }
+  .badge-fechado { background: var(--green-dim); color: var(--green); }
+
+  /* ── MULTAS ── */
+  .multa-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .multa-icon { font-size: 20px; width: 36px; text-align: center; }
+  .multa-info { flex: 1; }
+  .multa-motorista { font-weight: 600; font-size: 13px; margin-bottom: 2px; }
+  .multa-detalhes { font-size: 12px; color: var(--text-muted); }
+  .multa-valor { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--accent); font-size: 15px; white-space: nowrap; }
+
+  /* ── FORM ── */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 16px;
+  }
+
+  .form-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-group { margin-bottom: 14px; }
+
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--accent); }
+  .form-group select option { background: #0f1f3d; }
+  .form-group textarea { resize: vertical; min-height: 72px; }
+
+  .btn { width: 100%; padding: 12px; border-radius: 7px; border: none; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-secondary { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,200,150,0.2); }
+  .btn-secondary:hover { background: rgba(0,200,150,0.2); }
+
+  .form-hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+
+  /* ── CHEGADA CARDS ── */
+  .chegada-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--yellow);
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .chegada-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    background: rgba(245,200,66,0.05);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chegada-card-veiculo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: var(--text-mid);
+    white-space: nowrap;
+    min-width: 90px;
+    text-align: center;
+  }
+
+  .chegada-card-info { flex: 1; }
+  .chegada-card-nome { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+  .chegada-card-dest { font-size: 12px; color: var(--text-muted); }
+  .chegada-card-tempo { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--yellow); white-space: nowrap; }
+  .chegada-card-body { padding: 18px 20px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 12px 24px;
+    border-radius: 99px;
+    z-index: 999;
+    transition: transform 0.3s ease;
+    white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .empty-state { text-align: center; padding: 36px 20px; color: var(--text-muted); font-size: 13px; }
+  .empty-icon { font-size: 30px; margin-bottom: 10px; }
+
+  @media (max-width: 500px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    nav { padding: 0 14px; }
+    .nav-brand-name { font-size: 12px; }
+    main { padding: 18px 14px 80px; }
+    .tab-btn { font-size: 11px; padding: 5px 9px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo-box">
+      <!-- Ícone hidráulico simplificado -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2C8 2 5 5 5 9c0 5 7 13 7 13s7-8 7-13c0-4-3-7-7-7zm0 9.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 6.5 12 6.5s2.5 1.1 2.5 2.5S13.4 11.5 12 11.5z"/>
+      </svg>
+    </div>
+    <div class="nav-brand-text">
+      <span class="nav-brand-name">Hidráulicos Fenili</span>
+      <span class="nav-brand-sub">Controle de Frota</span>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showSection('dashboard', this)">Dashboard</button>
+    <button class="tab-btn" onclick="showSection('saida', this)">Saída</button>
+    <button class="tab-btn" onclick="showSection('chegada', this)">Chegada</button>
+    <button class="tab-btn" onclick="showSection('multas', this)">Multas</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="section active" id="section-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Fora agora</div>
+        <div class="stat-value" id="stat-emuso">0</div>
+        <div class="stat-sub">veículo(s)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Viagens hoje</div>
+        <div class="stat-value" id="stat-hoje">0</div>
+        <div class="stat-sub">registros</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Multas</div>
+        <div class="stat-value" id="stat-multas" style="color:var(--accent)">0</div>
+        <div class="stat-sub">registradas</div>
+      </div>
+    </div>
+
+    <div class="section-title">🟡 Fora agora</div>
+    <div id="dash-fora" style="margin-bottom:24px"></div>
+
+    <div class="section-title">Últimas movimentações</div>
+    <div id="lista-registros" style="margin-bottom:24px"></div>
+
+    <div class="section-title">Multas recentes</div>
+    <div id="lista-multas-dash"></div>
+  </div>
+
+  <!-- ══ SAÍDA ══ -->
+  <div class="section" id="section-saida">
+    <div class="form-card">
+      <div class="form-title">🚀 Registrar Saída</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Motorista</label>
+          <select id="saida-motorista">
+            <option value="">Selecione</option>
+            <option>Osni</option>
+            <option>Osni Júnior</option>
+            <option>Pedro</option>
+            <option>Sandra</option>
+            <option>Luís</option>
+            <option>Samuel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Veículo</label>
+          <select id="saida-veiculo">
+            <option value="">Selecione</option>
+            <option>Strada Branca</option>
+            <option>Strada Azul</option>
+            <option>F-1000</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>KM Inicial</label>
+          <input type="number" id="saida-km" placeholder="Ex: 45320">
+        </div>
+        <div class="form-group">
+          <label>Data / Hora</label>
+          <input type="datetime-local" id="saida-datetime">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Destino / Finalidade</label>
+        <input type="text" id="saida-destino" placeholder="Ex: Obra cliente X — Rua das Flores">
+      </div>
+      <button class="btn btn-primary" onclick="registrarSaida()">Registrar Saída</button>
+    </div>
+  </div>
+
+  <!-- ══ CHEGADA ══ -->
+  <div class="section" id="section-chegada">
+    <div id="chegada-lista"></div>
+  </div>
+
+  <!-- ══ MULTAS ══ -->
+  <div class="section" id="section-multas">
+    <div class="form-card">
+      <div class="form-title">⚠️ Registrar Multa</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Responsável</label>
+          <select id="multa-motorista">
+            <option value="">Selecione</option>
+            <option>Osni</option>
+            <option>Osni Júnior</option>
+            <option>Pedro</option>
+            <option>Sandra</option>
+            <option>Luís</option>
+            <option>Samuel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Veículo</label>
+          <select id="multa-veiculo">
+            <option value="">Selecione</option>
+            <option>Strada Branca</option>
+            <option>Strada Azul</option>
+            <option>F-1000</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Data / Hora da Infração</label>
+          <input type="datetime-local" id="multa-datetime">
+          <div class="form-hint">Use a data/hora que aparece na multa</div>
+        </div>
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input type="number" id="multa-valor" placeholder="Ex: 293.47" step="0.01">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Infração</label>
+        <input type="text" id="multa-infracao" placeholder="Ex: Excesso de velocidade — 57 km/h em via de 40">
+      </div>
+      <div class="form-group">
+        <label>Local</label>
+        <input type="text" id="multa-local" placeholder="Ex: Av. Brasil, próx. ao nº 1200">
+      </div>
+      <button class="btn btn-primary" onclick="registrarMulta()">Registrar Multa</button>
+    </div>
+    <div class="section-title">Histórico de multas</div>
+    <div id="lista-multas-full"></div>
+  </div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let registros = JSON.parse(localStorage.getItem('fenili_registros') || '[]');
+  let multas    = JSON.parse(localStorage.getItem('fenili_multas')    || '[]');
+
+  function salvar() {
+    localStorage.setItem('fenili_registros', JSON.stringify(registros));
+    localStorage.setItem('fenili_multas',    JSON.stringify(multas));
+  }
+
+  function showSection(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (id === 'dashboard') renderDashboard();
+    if (id === 'chegada')   renderChegada();
+    if (id === 'multas')    renderMultasFull();
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+
+  function nowLocal() {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('saida-datetime').value = nowLocal();
+    document.getElementById('multa-datetime').value = nowLocal();
+    renderDashboard();
+  });
+
+  // ── SAÍDA ──
+  function registrarSaida() {
+    const motorista = document.getElementById('saida-motorista').value;
+    const veiculo   = document.getElementById('saida-veiculo').value;
+    const km        = document.getElementById('saida-km').value;
+    const dt        = document.getElementById('saida-datetime').value;
+    const destino   = document.getElementById('saida-destino').value;
+
+    if (!motorista || !veiculo || !km || !dt || !destino) { toast('⚠️ Preencha todos os campos'); return; }
+
+    const emUso = registros.find(r => r.veiculo === veiculo && !r.kmFinal);
+    if (emUso) { toast(`⚠️ ${veiculo} já está com ${emUso.motorista}`); return; }
+
+    registros.unshift({ id: Date.now(), motorista, veiculo, kmInicial: parseInt(km), dtSaida: dt, destino, kmFinal: null, dtChegada: null, obs: '' });
+    salvar();
+
+    document.getElementById('saida-motorista').value = '';
+    document.getElementById('saida-veiculo').value   = '';
+    document.getElementById('saida-km').value        = '';
+    document.getElementById('saida-destino').value   = '';
+    document.getElementById('saida-datetime').value  = nowLocal();
+
+    toast('✅ Saída registrada!');
+  }
+
+  // ── CHEGADA ──
+  function renderChegada() {
+    const abertos = registros.filter(r => !r.kmFinal);
+    const container = document.getElementById('chegada-lista');
+
+    if (abertos.length === 0) {
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div>Todos os veículos estão na base.<br>Registre uma saída primeiro.</div>`;
+      return;
+    }
+
+    container.innerHTML = abertos.map(r => `
+      <div class="chegada-card" id="chegada-card-${r.id}">
+        <div class="chegada-card-header">
+          <div class="chegada-card-veiculo">${r.veiculo}</div>
+          <div class="chegada-card-info">
+            <div class="chegada-card-nome">${r.motorista}</div>
+            <div class="chegada-card-dest">${r.destino}</div>
+          </div>
+          <div class="chegada-card-tempo">${tempoDecorrido(r.dtSaida)}</div>
+        </div>
+        <div class="chegada-card-body">
+          <div class="form-row" style="margin-bottom:14px">
+            <div class="form-group" style="margin-bottom:0">
+              <label>KM Final</label>
+              <input type="number" id="km-${r.id}" placeholder="Ex: ${r.kmInicial + 50}">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>Hora de chegada</label>
+              <input type="datetime-local" id="dt-${r.id}" value="${nowLocal()}">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Observações (opcional)</label>
+            <textarea id="obs-${r.id}" placeholder="Alguma observação sobre a viagem?"></textarea>
+          </div>
+          <button class="btn btn-secondary" onclick="confirmarChegada(${r.id})">✔ Confirmar chegada de ${r.motorista}</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function confirmarChegada(id) {
+    const km  = document.getElementById('km-' + id).value;
+    const dt  = document.getElementById('dt-' + id).value;
+    const obs = document.getElementById('obs-' + id).value;
+
+    if (!km || !dt) { toast('⚠️ Preencha KM final e horário'); return; }
+
+    const reg = registros.find(r => r.id === id);
+    if (!reg) { toast('Registro não encontrado'); return; }
+    if (parseInt(km) < reg.kmInicial) { toast('⚠️ KM final menor que o inicial'); return; }
+
+    reg.kmFinal   = parseInt(km);
+    reg.dtChegada = dt;
+    reg.obs       = obs;
+    salvar();
+
+    const kmRodados = reg.kmFinal - reg.kmInicial;
+    const card = document.getElementById('chegada-card-' + id);
+    if (card) {
+      card.style.transition = 'opacity 0.3s, transform 0.3s';
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(20px)';
+      setTimeout(() => renderChegada(), 320);
+    }
+
+    toast(`✅ ${reg.motorista} chegou — ${kmRodados} km rodados`);
+  }
+
+  // ── MULTA ──
+  function registrarMulta() {
+    const motorista = document.getElementById('multa-motorista').value;
+    const veiculo   = document.getElementById('multa-veiculo').value;
+    const dt        = document.getElementById('multa-datetime').value;
+    const valor     = document.getElementById('multa-valor').value;
+    const infracao  = document.getElementById('multa-infracao').value;
+    const local     = document.getElementById('multa-local').value;
+
+    if (!motorista || !veiculo || !dt || !valor || !infracao) { toast('⚠️ Preencha todos os campos obrigatórios'); return; }
+
+    multas.unshift({ id: Date.now(), motorista, veiculo, dt, valor: parseFloat(valor), infracao, local });
+    salvar();
+
+    document.getElementById('multa-motorista').value = '';
+    document.getElementById('multa-veiculo').value   = '';
+    document.getElementById('multa-valor').value     = '';
+    document.getElementById('multa-infracao').value  = '';
+    document.getElementById('multa-local').value     = '';
+    document.getElementById('multa-datetime').value  = nowLocal();
+
+    renderMultasFull();
+    renderDashboard();
+    toast('⚠️ Multa registrada');
+  }
+
+  // ── DASHBOARD ──
+  function renderDashboard() {
+    const hoje    = new Date().toLocaleDateString('pt-BR');
+    const abertos = registros.filter(r => !r.kmFinal);
+    const hojeCount = registros.filter(r => fmtData(r.dtSaida) === hoje).length;
+
+    document.getElementById('stat-emuso').textContent  = abertos.length;
+    document.getElementById('stat-hoje').textContent   = hojeCount;
+    document.getElementById('stat-multas').textContent = multas.length;
+
+    const dashFora = document.getElementById('dash-fora');
+    dashFora.innerHTML = abertos.length === 0
+      ? `<div class="empty-state" style="padding:20px"><div class="empty-icon">✅</div>Todos na base.</div>`
+      : abertos.map(r => `
+        <div class="fora-card">
+          <div class="fora-veiculo">${r.veiculo}</div>
+          <div class="fora-info">
+            <div class="fora-motorista">${r.motorista}</div>
+            <div class="fora-destino">${r.destino}</div>
+          </div>
+          <div class="fora-meta">
+            <div class="fora-tempo">${tempoDecorrido(r.dtSaida)}</div>
+            <div>${fmtDt(r.dtSaida)}</div>
+          </div>
+        </div>`).join('');
+
+    const lista = document.getElementById('lista-registros');
+    lista.innerHTML = registros.length === 0
+      ? `<div class="empty-state"><div class="empty-icon">🚗</div>Nenhuma movimentação ainda.</div>`
+      : registros.slice(0, 10).map(r => {
+          const aberto = !r.kmFinal;
+          const km = r.kmFinal ? `${r.kmFinal - r.kmInicial} km` : `KM ${r.kmInicial}`;
+          return `
+            <div class="registro-card ${aberto ? 'aberto' : 'fechado'}">
+              <div class="reg-veiculo">${r.veiculo}</div>
+              <div class="reg-info">
+                <div class="reg-motorista">${r.motorista} <span class="badge ${aberto ? 'badge-aberto' : 'badge-fechado'}">${aberto ? 'fora' : 'voltou'}</span></div>
+                <div class="reg-destino">${r.destino}</div>
+              </div>
+              <div class="reg-meta">
+                <div class="reg-km">${km}</div>
+                <div>${fmtDt(r.dtSaida)}</div>
+              </div>
+            </div>`;
+        }).join('');
+
+    const multasDash = document.getElementById('lista-multas-dash');
+    multasDash.innerHTML = multas.length === 0
+      ? `<div class="empty-state"><div class="empty-icon">🎉</div>Nenhuma multa.</div>`
+      : multas.slice(0, 3).map(renderMultaCard).join('');
+  }
+
+  function renderMultasFull() {
+    document.getElementById('lista-multas-full').innerHTML = multas.length === 0
+      ? `<div class="empty-state"><div class="empty-icon">🎉</div>Nenhuma multa registrada.</div>`
+      : multas.map(renderMultaCard).join('');
+  }
+
+  function renderMultaCard(m) {
+    return `
+      <div class="multa-card">
+        <div class="multa-icon">⚠️</div>
+        <div class="multa-info">
+          <div class="multa-motorista">${m.motorista} — ${m.veiculo}</div>
+          <div class="multa-detalhes">${m.infracao}${m.local ? ' · ' + m.local : ''}</div>
+          <div class="multa-detalhes" style="margin-top:2px">${fmtDt(m.dt)}</div>
+        </div>
+        <div class="multa-valor">R$ ${m.valor.toFixed(2).replace('.', ',')}</div>
+      </div>`;
+  }
+
+  // ── HELPERS ──
+  function fmtDt(dtStr) {
+    if (!dtStr) return '—';
+    return new Date(dtStr).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function fmtData(dtStr) {
+    if (!dtStr) return '';
+    return new Date(dtStr).toLocaleDateString('pt-BR');
+  }
+
+  function tempoDecorrido(dtStr) {
+    if (!dtStr) return '';
+    const diff = Math.floor((Date.now() - new Date(dtStr).getTime()) / 60000);
+    if (diff < 1) return 'agora';
+    if (diff < 60) return `${diff}min fora`;
+    const h = Math.floor(diff / 60), m = diff % 60;
+    return `${h}h${m > 0 ? m + 'min' : ''} fora`;
+  }
+</script>
+</body>
+</html>
